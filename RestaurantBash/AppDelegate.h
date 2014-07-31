@@ -7,9 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
-
+#import "DataBaseManager.h"
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
-
+{
+    UINavigationController *navigationController;
+    DataBaseManager *dbManager;
+}
+@property (strong, nonatomic) UINavigationController *navigationController;
 @property (strong, nonatomic) UIWindow *window;
 
 @end

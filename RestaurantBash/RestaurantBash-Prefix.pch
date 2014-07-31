@@ -5,12 +5,85 @@
 //
 
 #import <Availability.h>
-
 #ifndef __IPHONE_5_0
 #warning "This project uses features only available in iOS SDK 5.0 and later."
 #endif
 
 #ifdef __OBJC__
-    #import <UIKit/UIKit.h>
-    #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
 #endif
+
+#define IS_EMPTY(x) (x==nil||[x isEqualToString:@""]) // to check empty test field
+
+#define STATUSBAR_ORIENTATION  [[UIApplication sharedApplication] statusBarOrientation]// to check orientation
+#define INTERFACE_IS_PAD     ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
+#define INTERFACE_IS_PHONE   ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+
+
+//alert messages
+#define ALERT_MSG_TITLE                 @"Restaurant Bash"
+#define USER_EMPTY_EMAIL                @"Please enter your username"
+#define USER_EMPTY_PWD                  @"Please enter your password"
+#define INVALID_EMAIL                   @"Please enter valid email"
+
+//requestType
+#define LOGIN_TYPE_1                    @"FIRST_LOGIN"
+#define LOGIN_TYPE_2                    @"SUBSEQUENT_LOGIN"
+#define BARCODE_SCAN_TYPE               @"BARCODE_SCAN"
+#define BARCODE_REDEEM_TYPE             @"BARCODE_REDEEM"
+
+
+// indicator values
+#define WSI_LOADING_TEXT                @"Loading"
+#define REQUEST_TIMEOUT_INTERVAL        100.0
+
+//STATUS CODE ALERT
+#define STATUS_CODE_FAILED_ERROR        @"Communication failed with server. Please try again"//after getting response if status code !=200
+
+//urls
+//#define REQ_URL                              @"http://dev.restaurantbash.com/app/loginAccess"
+//#define Barcode_Scan_URL                     @"http://dev.restaurantbash.com/app/fetchCodeDetails"
+//#define Barcode_Redeem_URL                   @"http://dev.restaurantbash.com/app/redeemCode"
+
+//HTTPS//live URL
+//#define REQ_URL                              @"https://restaurantbash.com/app/loginAccess"
+//#define Barcode_Scan_URL                     @"https://restaurantbash.com/app/fetchCodeDetails"
+//#define Barcode_Redeem_URL                   @"https://restaurantbash.com/app/redeemCode"
+
+//HTTPS//dev URL
+//#define REQ_URL                              @"https://dev.restaurantbash.com/app/loginAccess"
+//#define Barcode_Scan_URL                     @"https://dev.restaurantbash.com/app/fetchCodeDetails"
+//#define Barcode_Redeem_URL                   @"https://dev.restaurantbash.com/app/redeemCode"
+
+
+// test restaurant bash
+
+//#define REQ_URL                              @"http://test.restaurantbash.com/app/loginAccess"
+//#define Barcode_Scan_URL                     @"http://test.restaurantbash.com/app/fetchCodeDetails"
+//#define Barcode_Redeem_URL                   @"http://test.restaurantbash.com/app/redeemCode"
+
+
+// rajesh system
+
+//#define REQ_URL                              @"http://192.168.137.20/app/loginAccess"
+//#define Barcode_Scan_URL                     @"http://192.168.137.20/app/fetchCodeDetails"
+//#define Barcode_Redeem_URL                   @"http://192.168.137.20/app/redeemCode"
+
+
+//HTTPS//live URL
+//#define REQ_URL                              @"https://www.restaurantbash.com/app/loginAccess"
+//#define Barcode_Scan_URL                     @"https://www.restaurantbash.com/app/fetchCodeDetails"
+//#define Barcode_Redeem_URL                   @"https://www.restaurantbash.com/app/redeemCode"
+
+//HTTPS//live URL
+
+#define REQ_URL                              @"https://restaurantbash.com/app/loginAccess"
+#define Barcode_Scan_URL                     @"https://restaurantbash.com/app/fetchCodeDetails"
+#define Barcode_Redeem_URL                   @"https://restaurantbash.com/app/redeemCode"
+
+
+
+//systemVersion
+#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
+
