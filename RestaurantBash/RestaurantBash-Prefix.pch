@@ -14,6 +14,9 @@
 #import <Foundation/Foundation.h>
 #endif
 
+#import "SWRevealViewController.h"
+
+
 #define IS_EMPTY(x) (x==nil||[x isEqualToString:@""]) // to check empty test field
 
 #define STATUSBAR_ORIENTATION  [[UIApplication sharedApplication] statusBarOrientation]// to check orientation
@@ -59,9 +62,9 @@
 
 // test restaurant bash
 
-//#define REQ_URL                              @"http://test.restaurantbash.com/app/loginAccess"
-//#define Barcode_Scan_URL                     @"http://test.restaurantbash.com/app/fetchCodeDetails"
-//#define Barcode_Redeem_URL                   @"http://test.restaurantbash.com/app/redeemCode"
+#define REQ_URL                              @"http://test.restaurantbash.com/app/loginAccess"
+#define Barcode_Scan_URL                     @"http://test.restaurantbash.com/app/fetchCodeDetails"
+#define Barcode_Redeem_URL                   @"http://test.restaurantbash.com/app/redeemCode"
 
 
 // rajesh system
@@ -78,9 +81,28 @@
 
 //HTTPS//live URL
 
-#define REQ_URL                              @"https://restaurantbash.com/app/loginAccess"
-#define Barcode_Scan_URL                     @"https://restaurantbash.com/app/fetchCodeDetails"
-#define Barcode_Redeem_URL                   @"https://restaurantbash.com/app/redeemCode"
+//#define REQ_URL                              @"https://restaurantbash.com/app/loginAccess"
+//#define Barcode_Scan_URL                     @"https://restaurantbash.com/app/fetchCodeDetails"
+//#define Barcode_Redeem_URL                   @"https://restaurantbash.com/app/redeemCode"
+
+
+
+
+#define BASE_REQ_URL                              @"http://test.restaurantbash.com/"
+
+
+// reqUrl
+
+#define GET_ORDERS_LIST_REQ_URL                @"business/owneronlineorders"
+#define GET_ORDER_DETAILS_REQ_URL              @"business/orderdetails"
+#define UPDATE_ORDER_STATUS_REQ_URL            @"business/updateorderstatus"
+
+// req Types
+
+#define GET_ORDERS_LIST_REQ_TYPE                @"get owner order  list"
+#define GET_ORDER_DETAILS_REQ_TYPE              @"get owner order details"
+#define UPDATE_ORDER_STATUS_REQ_TYPE            @"Update order status"
+
 
 
 

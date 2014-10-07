@@ -22,15 +22,15 @@
 {
     
     UIButton *logoutButton;
-    UIButton *settingsButton;
+//    UIButton *settingsButton;
     UIButton *goButton;
-    UIButton *scanBarcodeButton;
-    UIButton *enterBarcodeButton;
+//    UIButton *scanBarcodeButton;
+//    UIButton *enterBarcodeButton;
     UIButton *enterBarcodeViewCancelButton;
     UIButton *restaurantCancelButton;
-    UIButton *chooseRestaurantButton;
-    UIButton *scanBarcodeBtn;
-    UIButton *enterBarcodeBtn;
+    IBOutlet UIButton *chooseRestaurantButton;
+//    UIButton *scanBarcodeBtn;
+//    UIButton *enterBarcodeBtn;
     UIButton *readBarCodeButton;
     
     DataBaseManager *dbManager;
@@ -67,9 +67,22 @@
     BOOL goButtonClicked;
     NSString *uniqueIdentifier;
 
+    
     int selectedIndex;
     NSString *selectedRest_Id;
     NSArray *restauranta;
+    
+    
+    IBOutlet UILabel *restaurantNameLabel;
+    IBOutlet UILabel *restaurantAddressLabel;
+    IBOutlet UILabel *restaurantOwnerNameLabel;
+    IBOutlet UILabel *restaurantOwnerPhoneLabel;
+    IBOutlet UILabel *restaurantOwnerEmailLabel;
+    
+    NSDictionary *currentRestaurantDict;
+    
+    NSString *emailID;
+    
 }
 
 @property (strong, nonatomic) CLLocationManager *locationManager;
@@ -77,4 +90,11 @@
 @property (nonatomic, retain) NSString *latitudeString;
 @property (nonatomic, retain) NSString *longitudeString;
 @property (nonatomic ,retain) NSArray *restauranta;
+
+
+-(IBAction)chooseRestaurantButtonClicked:(id)sender;
+-(IBAction)enterBarcodeButtonClicked:(id)sender;
+-(IBAction)scanBarcodeButtonClicked:(id)sender;
+-(IBAction)logoutButtonClicked:(id)sender;
+
 @end

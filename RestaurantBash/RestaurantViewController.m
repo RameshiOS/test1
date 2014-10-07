@@ -9,6 +9,7 @@
 #import "RestaurantViewController.h"
 #import "FAUtilities.h"
 @interface RestaurantViewController ()
+@property (nonatomic) IBOutlet UIBarButtonItem* revealButtonItem;
 
 @end
 
@@ -28,29 +29,78 @@ static BOOL haveAlreadyReceivedCoordinates;
     return self;
 }
 -(void)viewWillAppear:(BOOL)animated{
+//    [self.view addSubview:selectRestaurantSubview];
+   
     
-    if(UIInterfaceOrientationIsPortrait(STATUSBAR_ORIENTATION)){//
-        [self Potrait];
-    }else if(UIInterfaceOrientationIsLandscape(STATUSBAR_ORIENTATION)){
-        [self Landscape];
+    dbManager = [DataBaseManager dataBaseManager];
+    loginDetails= [[NSMutableArray alloc]init];
+    [dbManager execute:[NSString stringWithFormat:@"SELECT * FROM LoginDetails"] resultsArray:loginDetails];
+    if ([loginDetails count] !=0) {
+        loginDict =[loginDetails objectAtIndex:0];
     }
-    [selectRestaurantSubview addSubview:retaurantHeader];
-    [selectRestaurantSubview addSubview:restNameLabel];
-    [selectRestaurantSubview addSubview:restAddressLabel];
-    [selectRestaurantSubview addSubview:restContactNameLabel];
-    [selectRestaurantSubview addSubview:restPhoneLabel];
-    [selectRestaurantSubview addSubview:restEmailLabel];
-    if ([restauranta count]>1) {
-        [selectRestaurantSubview addSubview:settingsButton];
-    }
-    [selectRestaurantSubview addSubview:scanBarcodeBtn];
-    [selectRestaurantSubview addSubview:enterBarcodeBtn];
-    [self.view addSubview:selectRestaurantSubview];
+    
+    emailID =[[loginDetails objectAtIndex:0] valueForKey:@"UserName"];
+    
+    
+    NSString *resAddr = [currentRestaurantDict objectForKey:@"Rest_Address"];
+    NSString *resCity = [currentRestaurantDict objectForKey:@"Rest_City"];
+    NSString *resState = [currentRestaurantDict objectForKey:@"Rest_State"];
+    NSString *resZip = [currentRestaurantDict objectForKey:@"Rest_Zip"];
+    
+    
+    
+    
+    NSString *restAddress = [NSString stringWithFormat:@"%@, %@, %@, %@",resAddr,resCity,resState,resZip];
+    
+    
+    
+    restaurantNameLabel.text = [currentRestaurantDict objectForKey:@"Rest_Name"];
+    restaurantAddressLabel.text = restAddress;
+    restaurantOwnerNameLabel.text = [currentRestaurantDict objectForKey:@"Rest_ContactName"];
+    restaurantOwnerPhoneLabel.text = [currentRestaurantDict objectForKey:@"Rest_Phone"];
+    restaurantOwnerEmailLabel.text =  emailID;
+    selectedRest_Id =[currentRestaurantDict valueForKey:@"Rest_Id"];
+    
     [self.view addSubview:logoutButton];
 }
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    {
+        if(UIInterfaceOrientationIsLandscape(STATUSBAR_ORIENTATION)){
+            self.view.backgroundColor= [UIColor colorWithPatternImage:[UIImage imageNamed:@"viewBg_L.png"]];
+        }else if(UIInterfaceOrientationIsPortrait(STATUSBAR_ORIENTATION)){
+            self.view.backgroundColor =[UIColor colorWithPatternImage:[UIImage imageNamed:@"viewBg_P.png"]];
+        }
+        
+    }else{
+        if ([UIScreen mainScreen].bounds.size.height == 568) {  // iphone 4 inch
+            self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"iphoneBg_320x568.png"]];
+        }else{// iphone 3.5 inch
+            self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"iphoneBg_320x480.png"]];
+        }
+    }
+
+    
+    NSUserDefaults *defaults = [[NSUserDefaults alloc]init];
+    restauranta = [defaults objectForKey:@"Restaurants"];
+    
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage new]
+                                                  forBarMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.shadowImage = [UIImage new];
+    self.navigationController.navigationBar.translucent = YES;
+    self.navigationController.view.backgroundColor = [UIColor clearColor];
+    
+    
+    
+    [self.revealButtonItem setTintColor:[UIColor colorWithRed:151.0f/255.0f green:127.0f/255.0f blue:83.0f/255.0f alpha:1.0f]]; // Change to your colour
+    
+    [self.revealButtonItem setTarget: self.revealViewController];
+    [self.revealButtonItem setAction: @selector( revealToggle: )];
+    [self.navigationController.navigationBar addGestureRecognizer:self.revealViewController.panGestureRecognizer];
+    [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
     
     chooseRestaurantButtonClicked=NO;
     
@@ -92,9 +142,6 @@ static BOOL haveAlreadyReceivedCoordinates;
     [goButton setTitle:@"Go" forState:UIControlStateNormal];
     [goButton setTitleColor:[FAUtilities getUIColorObjectFromHexString:@"#8D318A" alpha:.9] forState:UIControlStateNormal];
     
-    settingsButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    [settingsButton addTarget:self action:@selector(chooseRestaurantButtonClicked:) forControlEvents:UIControlEventTouchUpInside];
-    [settingsButton setBackgroundImage:[UIImage imageNamed:@"gear_wheel.png"] forState:UIControlStateNormal];
     
     restaurantListSubView = [[UIView alloc]init];
     restaurantListSubView.backgroundColor = [UIColor clearColor];
@@ -190,7 +237,7 @@ static BOOL haveAlreadyReceivedCoordinates;
             
             addressVal = [addressVal stringByReplacingOccurrencesOfString:@"\r\n" withString:@""];
             NSLog(@"addressVal after spaces and next line%@",addressVal);
-//            addressVal = [NSString stringWithFormat:@"%@,%@,%@,%@",rest_address,rest_city,rest_state,rest_zip];
+
         }
         retaurantHeader = [[UILabel alloc] init];
         retaurantHeader.textColor = [UIColor whiteColor];
@@ -214,10 +261,6 @@ static BOOL haveAlreadyReceivedCoordinates;
         restAddressLabel.text=addressVal;
         restAddressLabel.backgroundColor=[UIColor clearColor];
         restAddressLabel.userInteractionEnabled=NO;
-//        restAddressLabel.numberOfLines=0;
-//        restAddressLabel.adjustsFontSizeToFitWidth = YES;
-//        restAddressLabel.minimumScaleFactor=0.7;
-//        [restAddressLabel sizeToFit];
         
         restContactNameLabel = [[UILabel alloc] init];
         restContactNameLabel.textColor = [UIColor blackColor];
@@ -243,24 +286,23 @@ static BOOL haveAlreadyReceivedCoordinates;
         restEmailLabel.backgroundColor=[UIColor clearColor];
         restEmailLabel.userInteractionEnabled=NO;
        
+        
+        currentRestaurantDict = [restauranta objectAtIndex:0];
+        
     }else{
         [FAUtilities showToastMessageAlert:@"Restaurants not available for this user"];
     }
-    scanBarcodeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    [scanBarcodeBtn addTarget:self action:@selector(scanBarcodeButtonClicked:) forControlEvents:UIControlEventTouchUpInside];
-    [scanBarcodeBtn setBackgroundImage:[UIImage imageNamed:@"purple_Normal.png"] forState:UIControlStateNormal];
-    [scanBarcodeBtn setBackgroundImage:[UIImage imageNamed:@"orange_Normal.png"] forState:UIControlStateSelected];
-    [scanBarcodeBtn setBackgroundImage:[UIImage imageNamed:@"orange_Normal.png"] forState:UIControlStateHighlighted];
-    [scanBarcodeBtn setTitle:@"Scan Barcode" forState:UIControlStateNormal];
-    [scanBarcodeBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     
-    enterBarcodeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    [enterBarcodeBtn addTarget:self action:@selector(enterBarcodeButtonClicked:) forControlEvents:UIControlEventTouchUpInside];
-    [enterBarcodeBtn setBackgroundImage:[UIImage imageNamed:@"purple_Normal.png"] forState:UIControlStateNormal];
-    [enterBarcodeBtn setBackgroundImage:[UIImage imageNamed:@"orange_Normal.png"] forState:UIControlStateSelected];
-    [enterBarcodeBtn setBackgroundImage:[UIImage imageNamed:@"orange_Normal.png"] forState:UIControlStateHighlighted];
-    [enterBarcodeBtn setTitle:@"Enter Barcode" forState:UIControlStateNormal];
-    [enterBarcodeBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    
+    if ([restauranta count] == 1) {
+        chooseRestaurantButton.hidden = YES;
+    }else{
+        chooseRestaurantButton.hidden = NO;
+    }
+    
+    
+    
+    
     
     [ZBarReaderViewController class];
     reader =[ZBarReaderViewController new];
@@ -273,13 +315,6 @@ static BOOL haveAlreadyReceivedCoordinates;
     {
         logoutButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:20.0f];
         retaurantHeader.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:35.0f];
-        restNameLabel.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:30.0f];
-        restAddressLabel.font =[UIFont fontWithName:@"TrebuchetMS-Bold" size:20.0f];
-        restContactNameLabel.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:20.0f];
-        restPhoneLabel.font =[UIFont fontWithName:@"TrebuchetMS" size:20.0f];
-        restEmailLabel.font =[UIFont fontWithName:@"TrebuchetMS" size:20.0f];
-        scanBarcodeBtn.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:40.0f];
-        enterBarcodeBtn.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:40.0f];
         enterBarcodeHeader.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:35.0f];
         goButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:30.0f];
         selectRestaurantHeader.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:35.0f];
@@ -295,7 +330,7 @@ static BOOL haveAlreadyReceivedCoordinates;
     
 }
 
--(void)scanBarcodeButtonClicked:(id)sender{
+-(IBAction)scanBarcodeButtonClicked:(id)sender{
 
     [self.view endEditing:YES];
     if ([restauranta count] == 0) {
@@ -406,6 +441,9 @@ static BOOL haveAlreadyReceivedCoordinates;
     if (((selectedRest_Id == (id)[NSNull null])|| (selectedRest_Id==nil)||  (selectedRest_Id.length==0))) {
         selectedRest_Id =rest_id;
     }
+    
+    
+    
     uniqueIdentifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString]; // IOS 6+
     NSLog(@"UDID:: %@", uniqueIdentifier);
     NSString *bodyStr =[NSString stringWithFormat: @"{\"res_id\":\"%@\", \"barcode\":\"%@\", \"device_details\": {\"device_id\":\"%@\", \"lat\":\"%@\", \"long\":\"%@\"}}",selectedRest_Id,barcode,uniqueIdentifier,latitudeString,longitudeString];
@@ -485,7 +523,7 @@ static BOOL haveAlreadyReceivedCoordinates;
     }
 }
 
--(void)enterBarcodeButtonClicked:(id)sender{
+-(IBAction)enterBarcodeButtonClicked:(id)sender{
     if ([restauranta count] == 0) {
         [FAUtilities showToastMessageAlert:@"No restaurants found to enter barcode"];
     }else{
@@ -552,105 +590,8 @@ static BOOL haveAlreadyReceivedCoordinates;
     barcodeNumberField.frame= CGRectMake(10.0f, 48.0f,enterBarcodeHeaderView.frame.size.width-70.0f, 40.0f);
     goButton.frame= CGRectMake(barcodeNumberField.frame.origin.x +barcodeNumberField.frame.size.width+5.0, 48.0f,50.0f, 40.0f);
 }
--(void)Landscape{
-    
-    self.view.frame = CGRectMake(self.view.frame.origin.x, self.view.frame.origin.y, 1024, 768);
-    selectRestaurantSubview.frame = CGRectMake(self.view.frame.origin.x,self.view.frame.origin.y+125,self.view.frame.size.width,self.view.frame.size.height-255);
-    [self drawAttachment];
-    self.view.backgroundColor= [UIColor colorWithPatternImage:[UIImage imageNamed:@"viewBg_L.png"]];
-}
--(void)Potrait{
-    
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-    {
-        
-        self.view.backgroundColor =[UIColor colorWithPatternImage:[UIImage imageNamed:@"viewBg_P.png"]];
-        selectRestaurantSubview.frame = CGRectMake(self.view.frame.origin.x,self.view.frame.origin.y+124,self.view.frame.size.width,self.view.frame.size.height-252);
-        [self drawAttachment];
-        
-    }else{
-        if ([UIScreen mainScreen].bounds.size.height == 568) {  // iphone 4 inch
-            selectRestaurantSubview.frame = CGRectMake(self.view.frame.origin.x,self.view.frame.origin.y+77,self.view.frame.size.width,self.view.frame.size.height-159);
-            self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"iphoneBg_320x568.png"]];
-            logoutButton.frame = CGRectMake(250,35, 60, 26.0);
-            retaurantHeader.frame = CGRectMake(0,0,self.view.frame.size.width,30.0f);
-        }else{// iphone 3.5 inch
-            self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"iphoneBg_320x480.png"]];
-            selectRestaurantSubview.frame = CGRectMake(self.view.frame.origin.x,self.view.frame.origin.y+80,self.view.frame.size.width,self.view.frame.size.height-162);
-            logoutButton.frame = CGRectMake(250,38, 60, 26.0);
-            retaurantHeader.frame = CGRectMake(0,0,self.view.frame.size.width,30.0f);
-        }
-        
-        retaurantHeader.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:15.0f];
-        logoutButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:15.0f];
-        restNameLabel.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:15.0f];
-        restAddressLabel.font =[UIFont fontWithName:@"TrebuchetMS" size:10.0f];
-        restContactNameLabel.font=[UIFont fontWithName:@"TrebuchetMS-Bold" size:10.0f];
-        restPhoneLabel.font =[UIFont fontWithName:@"TrebuchetMS" size:10.0f];
-        restEmailLabel.font =[UIFont fontWithName:@"TrebuchetMS" size:10.0f];
-        scanBarcodeBtn.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:20.0f];
-        enterBarcodeBtn.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:20.0f];
-        
-        restNameLabel.frame = CGRectMake(self.view.frame.origin.x+2,retaurantHeader.frame.origin.y+retaurantHeader.frame.size.height+5.0f,self.view.frame.size.width-30.0f,20.0f);
-        
-        settingsButton.frame = CGRectMake(restNameLabel.frame.origin.x+restNameLabel.frame.size.width+5.0f,retaurantHeader.frame.origin.y+retaurantHeader.frame.size.height+5.0, 20.0, 20.0);
-//        if (addressVal.length!=0) {
-//
-//        NSAttributedString *attributedText = [[NSAttributedString alloc] initWithString:addressVal attributes:@{NSFontAttributeName: restAddressLabel.font }];
-//        CGRect rect = [attributedText boundingRectWithSize:(CGSize){self.view.frame.size.width-2*restNameLabel.frame.origin.x, CGFLOAT_MAX}
-//                                                   options:NSStringDrawingUsesLineFragmentOrigin
-//                                                   context:nil];
-//        CGSize size = rect.size;
-//        size.height = ceilf(size.height);
-//        size.width  = ceilf(size.width);
-//        restAddressLabel.frame = CGRectMake(restNameLabel.frame.origin.x,restNameLabel.frame.origin.y+restNameLabel.frame.size.height,size.width,size.height);
-//        }else{
-//            restAddressLabel.frame = CGRectMake(restNameLabel.frame.origin.x,restNameLabel.frame.origin.y+restNameLabel.frame.size.height,self.view.frame.size.width-2*restNameLabel.frame.origin.x,20.0);
-//
-//        }
-         restAddressLabel.frame = CGRectMake(restNameLabel.frame.origin.x,restNameLabel.frame.origin.y+restNameLabel.frame.size.height,self.view.frame.size.width-10,20);
-        restContactNameLabel.frame =  CGRectMake(restAddressLabel.frame.origin.x,restAddressLabel.frame.origin.y+restAddressLabel.frame.size.height,self.view.frame.size.width-10,15.0);
-        
-        
-        restPhoneLabel.frame =CGRectMake(restContactNameLabel.frame.origin.x,restContactNameLabel.frame.origin.y+restContactNameLabel.frame.size.height,self.view.frame.size.width-10,15.0);
-        restEmailLabel.frame =CGRectMake(restPhoneLabel.frame.origin.x,restPhoneLabel.frame.origin.y+restPhoneLabel.frame.size.height,self.view.frame.size.width-10,25.0);
-        
 
-        
-        scanBarcodeBtn.frame = CGRectMake(self.view.frame.origin.x+10.0,restEmailLabel.frame.origin.y+restEmailLabel.frame.size.height+10.0f,(self.view.frame.size.width-20), 40.0f);
-        enterBarcodeBtn.frame = CGRectMake(self.view.frame.origin.x+10.0,scanBarcodeBtn.frame.origin.y+scanBarcodeBtn.frame.size.height+5.0f,(self.view.frame.size.width-20), 40.0f);
-        
-    }
-}
--(void)drawAttachment{
-    logoutButton.frame = CGRectMake(self.view.frame.origin.x+self.view.frame.size.width-140,self.view.frame.origin.y+45, 120, 40.0);
-    retaurantHeader.frame = CGRectMake(selectRestaurantSubview.frame.origin.x,0,selectRestaurantSubview.frame.size.width,50.0f);
-    restNameLabel.frame = CGRectMake(retaurantHeader.frame.origin.x+5,retaurantHeader.frame.origin.y+retaurantHeader.frame.size.height+5.0f,retaurantHeader.frame.size.width-10*(retaurantHeader.frame.origin.x+5),50.0f);
-    settingsButton.frame = CGRectMake(restNameLabel.frame.origin.x+restNameLabel.frame.size.width+5.0f,restNameLabel.frame.size.height+15.0f, 30.0, 30.0);
-//    if (addressVal.length!=0) {
-//        NSAttributedString *attributedText = [[NSAttributedString alloc] initWithString:addressVal attributes:@{NSFontAttributeName: restAddressLabel.font }];
-//        CGRect rect = [attributedText boundingRectWithSize:(CGSize){self.view.frame.size.width-2*restNameLabel.frame.origin.x, CGFLOAT_MAX}
-//                                                   options:NSStringDrawingUsesLineFragmentOrigin
-//                                                   context:nil];
-//        CGSize size = rect.size;
-//        size.height = ceilf(size.height);
-//        size.width  = ceilf(size.width);
-//        restAddressLabel.frame = CGRectMake(restNameLabel.frame.origin.x,restNameLabel.frame.origin.y+restNameLabel.frame.size.height,size.width,size.height);
-//
-//    }else {
-//        restAddressLabel.frame = CGRectMake(restNameLabel.frame.origin.x,restNameLabel.frame.origin.y+restNameLabel.frame.size.height+1.0,retaurantHeader.frame.size.width-2*(restNameLabel.frame.origin.x),30);
-//  
-//    }
-    restAddressLabel.frame = CGRectMake(restNameLabel.frame.origin.x,restNameLabel.frame.origin.y+restNameLabel.frame.size.height,self.view.frame.size.width-10,20);
 
-    restContactNameLabel.frame =  CGRectMake(restAddressLabel.frame.origin.x,restAddressLabel.frame.origin.y+restAddressLabel.frame.size.height+1.0,self.view.frame.size.width-10,20);
-    restPhoneLabel.frame =CGRectMake(restContactNameLabel.frame.origin.x,restContactNameLabel.frame.origin.y+restContactNameLabel.frame.size.height+1.0,self.view.frame.size.width-10,20);
-    
-    restEmailLabel.frame =CGRectMake(restPhoneLabel.frame.origin.x,restPhoneLabel.frame.origin.y+restPhoneLabel.frame.size.height+1.0,self.view.frame.size.width-10,30);
-    
-    scanBarcodeBtn.frame = CGRectMake(self.view.frame.origin.x+10.0,restEmailLabel.frame.origin.y+restEmailLabel.frame.size.height+10.0f,(self.view.frame.size.width-20), 70.0f);
-    enterBarcodeBtn.frame = CGRectMake(self.view.frame.origin.x+10.0,scanBarcodeBtn.frame.origin.y+scanBarcodeBtn.frame.size.height+5.0f,(self.view.frame.size.width-20), 70.0f);
-}
 -(void)selectRestPotrait{
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
     {
@@ -718,10 +659,6 @@ static BOOL haveAlreadyReceivedCoordinates;
             cell.textLabel.text = @"----------";
         }else{
             cell.textLabel.text = restName;
-            //            cell.textLabel.numberOfLines=2;
-            //            cell.textLabel.adjustsFontSizeToFitWidth = YES;//autoshrink the label text in fixed width
-            //            cell.textLabel.minimumScaleFactor=0.5;
-            //            [cell.textLabel sizeToFit];
         }
     }else{
         cell.textLabel.text = @"----------";
@@ -737,67 +674,34 @@ static BOOL haveAlreadyReceivedCoordinates;
     cell.backgroundColor = [UIColor colorWithRed:255/255.0f green:238/255.0f blue:219/255.0f alpha:1.0];
     return cell;
 }
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
     NSMutableDictionary *tempDict = [restauranta objectAtIndex:indexPath.row];
-    NSString *rest_address,*rest_city,*rest_state,*rest_zip,*rest_name,*rest_contactName,*rest_phone,*rest_id;
-    if ((tempDict == (id)[NSNull null]) ||(tempDict==nil)) {
-    }else{
-        if ([[tempDict allKeys] containsObject:@"Rest_Address"]) {
-            rest_address= [tempDict objectForKey:@"Rest_Address"];
-            NSLog(@"contains address Key");
-        }else{
-        }
-        if ([[tempDict allKeys] containsObject:@"Rest_City"]) {
-            rest_city= [tempDict objectForKey:@"Rest_City"];
-            NSLog(@"contains city Key");
-        }else{
-        }
-        if ([[tempDict allKeys] containsObject:@"Rest_State"]) {
-            rest_state= [tempDict objectForKey:@"Rest_State"];
-            NSLog(@"contains state Key");
-        }else{
-        }
-        if ([[tempDict allKeys] containsObject:@"Rest_Zip"]) {
-            rest_zip= [tempDict objectForKey:@"Rest_Zip"];
-            NSLog(@"contains zip Key");
-        }else{
-        }if ([[tempDict allKeys] containsObject:@"Rest_Name"]) {
-            rest_name= [tempDict objectForKey:@"Rest_Name"];
-            NSLog(@"contains name Key");
-        }else{
-        }if ([[tempDict allKeys] containsObject:@"Rest_ContactName"]) {
-            rest_contactName= [tempDict objectForKey:@"Rest_ContactName"];
-            NSLog(@"contains contactName Key");
-        }else{
-        }if ([[tempDict allKeys] containsObject:@"Rest_Phone"]) {
-            rest_phone=[tempDict objectForKey:@"Rest_Phone"];
-            NSLog(@"contains phone Key");
-        }else{
-        }if ([[tempDict allKeys] containsObject:@"Rest_Id"]) {
-            rest_id= [tempDict valueForKey:@"Rest_Id"];
-            NSLog(@"contains rest_id Key");
-        }else{
-        }
-        addressVal = [NSString stringWithFormat:@"%@,%@,%@,%@",rest_address,rest_city,rest_state,rest_zip];
-        NSLog(@"addressVal before spaces and next line%@",addressVal);
 
-        addressVal = [addressVal stringByReplacingOccurrencesOfString:@"\r\n" withString:@""];
-        NSLog(@"addressVal after spaces and next line%@",addressVal);
-    }
+    currentRestaurantDict = tempDict;
+    NSString *rest_id;
 
-    
-    restNameLabel.text = rest_name;
-    restContactNameLabel.text = rest_contactName;
-    NSMutableArray* loginDetailsArray= [[NSMutableArray alloc]init];
-    [dbManager execute:[NSString stringWithFormat:@"SELECT * FROM LoginDetails"] resultsArray:loginDetailsArray];
-    NSDictionary* loginDictionary =[loginDetailsArray objectAtIndex:0];
-    restEmailLabel.text=[loginDictionary valueForKey:@"UserName"];
-    restPhoneLabel.text = rest_phone;
-    restAddressLabel.text =addressVal;
     selectedRest_Id = rest_id;
     selectedIndex = indexPath.row;
     [tableView reloadData];
+    
+    
+    NSString *resAddr = [currentRestaurantDict objectForKey:@"Rest_Address"];
+    NSString *resCity = [currentRestaurantDict objectForKey:@"Rest_City"];
+    NSString *resState = [currentRestaurantDict objectForKey:@"Rest_State"];
+    NSString *resZip = [currentRestaurantDict objectForKey:@"Rest_Zip"];
+    
+    
+    NSString *restAddress = [NSString stringWithFormat:@"%@, %@, %@, %@",resAddr,resCity,resState,resZip];
+    
+    restaurantNameLabel.text = [currentRestaurantDict objectForKey:@"Rest_Name"];
+    restaurantAddressLabel.text = restAddress;
+    restaurantOwnerNameLabel.text = [currentRestaurantDict objectForKey:@"Rest_ContactName"];
+    restaurantOwnerPhoneLabel.text = [currentRestaurantDict objectForKey:@"Rest_Phone"];
+    restaurantOwnerEmailLabel.text =  emailID;
+    selectedRest_Id =[currentRestaurantDict valueForKey:@"Rest_Id"];
+    
     [self restaurantCancelButtonClicked:nil];
 }
 
@@ -813,19 +717,12 @@ static BOOL haveAlreadyReceivedCoordinates;
 }
 
 
--(void)logoutButtonClicked:(id)sender{
+-(IBAction)logoutButtonClicked:(id)sender{
     
-//    [logoutButton setBackgroundImage:[UIImage imageNamed:@"Btn_Active.png"] forState:UIControlStateSelected];
-//    [logoutButton setBackgroundImage:[UIImage imageNamed:@"Btn_Active.png"] forState:UIControlStateHighlighted];
     [logoutButton setBackgroundImage:[UIImage imageNamed:@"purple.png"]forState:UIControlStateNormal];
     [logoutButton setBackgroundImage:[UIImage imageNamed:@"orange.png"] forState:UIControlStateSelected];
     [logoutButton setBackgroundImage:[UIImage imageNamed:@"orange.png"] forState:UIControlStateHighlighted];
-    //  dbManager = [DataBaseManager dataBaseManager];
-    
-    //  NSMutableArray *loginDetails = [[NSMutableArray alloc]init];
-    //  [dbManager execute:[NSString stringWithFormat:@"SELECT * FROM LoginDetails"] resultsArray:loginDetails];
-    
-    //   NSString *currentUser = [[loginDetails objectAtIndex:0] valueForKey:@"CurrentUser"];
+
     NSString *currentUser = [loginDict valueForKey:@"CurrentUser"];
     if ([currentUser isEqualToString:@"ON"]) {
         [dbManager execute:[NSString stringWithFormat:@"Update LoginDetails set CurrentUser ='%@'",@"OFF"]];
@@ -838,7 +735,8 @@ static BOOL haveAlreadyReceivedCoordinates;
         [self.navigationController pushViewController:loginViewController animated:YES];
         [UIView setAnimationTransition:UIViewAnimationTransitionFlipFromRight forView:self.navigationController.view cache:NO];}];
 }
--(void)chooseRestaurantButtonClicked:(id)sender{
+
+-(IBAction)chooseRestaurantButtonClicked:(id)sender{
     
     if (enterBarcodeButtonClicked == YES) {
         [self enterBarcodeViewCancelButtonClicked:nil];
@@ -987,11 +885,24 @@ static BOOL haveAlreadyReceivedCoordinates;
     }else if(UIInterfaceOrientationIsPortrait(STATUSBAR_ORIENTATION)){
         [self selectRestPotrait];
     }
-    if(UIInterfaceOrientationIsPortrait(STATUSBAR_ORIENTATION)){//
-        [self Potrait];
-    }else if(UIInterfaceOrientationIsLandscape(STATUSBAR_ORIENTATION)){
-        [self Landscape];
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    {
+        if(UIInterfaceOrientationIsLandscape(STATUSBAR_ORIENTATION)){
+            self.view.backgroundColor= [UIColor colorWithPatternImage:[UIImage imageNamed:@"viewBg_L.png"]];
+        }else if(UIInterfaceOrientationIsPortrait(STATUSBAR_ORIENTATION)){
+            self.view.backgroundColor =[UIColor colorWithPatternImage:[UIImage imageNamed:@"viewBg_P.png"]];
+        }
+        
+    }else{
+        if ([UIScreen mainScreen].bounds.size.height == 568) {  // iphone 4 inch
+            self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"iphoneBg_320x568.png"]];
+        }else{// iphone 3.5 inch
+            self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"iphoneBg_320x480.png"]];
+        }
     }
+
+   
     
     if ([self.presentedViewController isKindOfClass:[ZBarReaderViewController class]]){
         [reader dismissViewControllerAnimated:NO completion:nil];
@@ -1000,6 +911,8 @@ static BOOL haveAlreadyReceivedCoordinates;
     }
     
 }
+
+
 
 
 - (void)didReceiveMemoryWarning

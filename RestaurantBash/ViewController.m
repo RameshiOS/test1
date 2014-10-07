@@ -23,6 +23,8 @@
 - (BOOL)prefersStatusBarHidden {
     return YES;
 }
+
+
 -(void)goToNextView{
     dbManager = [DataBaseManager dataBaseManager];
     NSMutableArray *loginDetails = [[NSMutableArray alloc]init];
@@ -57,9 +59,21 @@
             transition.type = kCATransitionMoveIn;
             transition.subtype = kCATransitionFromLeft;
             [self.navigationController.view.layer addAnimation:transition forKey:nil];
-            RestaurantViewController *restaurantViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"RestaurantViewController"];
-            restaurantViewController.restauranta =restDetails;
-            [self.navigationController pushViewController:restaurantViewController animated:YES];
+           
+            NSMutableArray *restDetails = [[NSMutableArray alloc]init];
+            [dbManager execute:[NSString stringWithFormat:@"SELECT * FROM RestaurantDetails"] resultsArray:restDetails];
+            
+            
+            NSUserDefaults *defaults = [[NSUserDefaults alloc]init];
+            [defaults setObject:restDetails forKey:@"Restaurants"];
+            [defaults synchronize];
+            
+            [self performSegueWithIdentifier:@"ViewToRestaurant" sender:self];
+
+//            s
+//            RestaurantViewController *restaurantViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"RestaurantViewController"];
+//            restaurantViewController.restauranta =restDetails;
+//            [self.navigationController pushViewController:restaurantViewController animated:YES];
         }
     }
 }

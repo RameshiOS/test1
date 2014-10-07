@@ -15,12 +15,61 @@
 {
     [NSThread sleepForTimeInterval:1.5];
     dbManager = [DataBaseManager dataBaseManager];
-    [dbManager execute:[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@ (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,'UserName' TEXT, 'Password' TEXT,'CurrentUser' TEXT)",@"LoginDetails"]];
+    
+    [dbManager execute:[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@ (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,'UserName' TEXT, 'Password' TEXT,'CurrentUser' TEXT,'UserID' TEXT)",@"LoginDetails"]];
+    
     [dbManager execute:[NSString stringWithFormat:@"CREATE TABLE IF NOT EXISTS %@ (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,'Rest_Id' INTEGER, 'Rest_Name' TEXT,'Rest_Phone' TEXT,'Rest_Address' TEXT,'Rest_City' TEXT,'Rest_State' TEXT,'Rest_Zip' TEXT,'Rest_ContactName' TEXT)",@"RestaurantDetails"]];
     
     // Override point for customization after application launch.
+    
+    
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
+
+    
     return YES;
 }
+
+- (void)application:(UIApplication *)app didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+    
+    
+    [[UIApplication sharedApplication] setApplicationIconBadgeNumber: 0];
+    NSString *tempStr = [NSString stringWithFormat:@"%@",deviceToken];
+    
+    NSLog(@"device token %@", tempStr);
+    
+    NSString *tempApnID = tempStr;
+    tempApnID = [tempApnID substringFromIndex:1];
+    tempApnID = [tempApnID substringToIndex:[tempApnID length]-1];
+    
+    [tempApnID stringByReplacingOccurrencesOfString:@" " withString:@""];
+    
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:tempApnID forKey:@"DeviceToken"];
+    [defaults synchronize];
+    
+}
+
+- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+    [FAUtilities showAlert:@"Unable to connect aps-environment"];
+}
+
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+    for (id key in userInfo) {
+        
+        [[UIApplication sharedApplication] setApplicationIconBadgeNumber: 0];
+        
+        NSDictionary *alertsDict = [[userInfo objectForKey:key] objectForKey:@"alert"];
+        
+        NSString *alertMsg = [alertsDict objectForKey:@"body"];
+        UIAlertView *notificationMsgAlert = [[UIAlertView alloc]initWithTitle:@"Alert" message:alertMsg delegate:self cancelButtonTitle:nil otherButtonTitles:@"Ok", nil];
+        
+        [notificationMsgAlert show];
+        
+    }
+}
+
 
 - (void)applicationWillResignActive:(UIApplication *)application
 {

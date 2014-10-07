@@ -91,9 +91,6 @@ static BOOL haveAlreadyReceivedCoordinates;
     [loginButton setBackgroundImage:[UIImage imageNamed:@"orange_Normal.png"] forState:UIControlStateSelected];
     [loginButton setBackgroundImage:[UIImage imageNamed:@"orange_Normal.png"] forState:UIControlStateHighlighted];
     [loginButton addTarget:self action:@selector(subLoginClicked:) forControlEvents:UIControlEventTouchUpInside];
-    
-    
-      
 
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
     {
@@ -210,6 +207,7 @@ static BOOL haveAlreadyReceivedCoordinates;
         return;
     }
     
+    
     haveAlreadyReceivedCoordinates = YES;
     _currentLocation = [self.locationManager location];
     
@@ -285,6 +283,17 @@ static BOOL haveAlreadyReceivedCoordinates;
     [test setObject:userNameField.text forKey:@"Username"];
     [test setObject:passwordField.text forKey:@"Password"];
     
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *deviceToken = [defaults objectForKey:@"DeviceToken"];
+    
+    if (deviceToken == NULL) {
+        deviceToken = @"79c5b1a8 289bf63a 08d14a70 b440fe6f 9c3d7d0f 06352206 9131e675 f614f8ed";
+    }
+    
+    [test setObject:[deviceToken stringByReplacingOccurrencesOfString:@" " withString:@""] forKey:@"DeviceToken"];
+
+    
     NSString *postDataInString = [self postFormatString:reqType withDictionary:test];
     NSData *postJsonData = [postDataInString dataUsingEncoding:NSUTF8StringEncoding];
     webServiceInterface = [[WebServiceInterface alloc]initWithVC:self];
@@ -305,7 +314,10 @@ static BOOL haveAlreadyReceivedCoordinates;
     uniqueIdentifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString]; // IOS 6+
     NSLog(@"UDID:: %@", uniqueIdentifier);
     
-    NSString *bodyStr =[NSString stringWithFormat: @"{\"bz_user_email\":\"%@\", \"bz_user_pwd\":\"%@\", \"is_first_time\":\"%@\",  \"device_details\": {\"device_id\":\"%@\", \"lat\":\"%@\", \"long\":\"%@\"}}",[formatDict valueForKey:@"Username"],[formatDict valueForKey:@"Password"],isAttempt,uniqueIdentifier,latitudeString,longitudeString];
+    
+    
+    
+    NSString *bodyStr =[NSString stringWithFormat: @"{\"bz_user_email\":\"%@\", \"bz_user_pwd\":\"%@\", \"is_first_time\":\"%@\",\"device_token\":\"%@\",\"device_details\": {\"device_id\":\"%@\", \"lat\":\"%@\", \"long\":\"%@\"}}",[formatDict valueForKey:@"Username"],[formatDict valueForKey:@"Password"],isAttempt,[formatDict valueForKey:@"DeviceToken"],uniqueIdentifier,latitudeString,longitudeString];
     return bodyStr;
 }
 
@@ -347,9 +359,12 @@ static BOOL haveAlreadyReceivedCoordinates;
                     NSString *query = [NSString stringWithFormat:@"DELETE FROM RestaurantDetails"];
                     [dbManager execute:query];
                     
-                    [dbManager execute:[NSString stringWithFormat: @"INSERT INTO 'LoginDetails' (UserName, Password,CurrentUser)VALUES ('%@', '%@','ON')",userNameField.text,passwordField.text]];
                     
                     if ([restaurantaAry count]>0){
+                        
+                        [dbManager execute:[NSString stringWithFormat: @"INSERT INTO 'LoginDetails' (UserName, Password,CurrentUser,UserID)VALUES ('%@', '%@','ON','%@')",userNameField.text,passwordField.text,[[restaurantaAry objectAtIndex:0] objectForKey:@"bz_user_id"]]];
+
+                        
                         for (int i = 0; i<[restaurantaAry count]; i++) {
                             NSDictionary * restDict = [restaurantaAry objectAtIndex:i];
                             NSString *rest_id,*rest_name,*rest_phone,*rest_address,*rest_city,*rest_state,*rest_zip,*rest_contactName;
@@ -389,9 +404,18 @@ static BOOL haveAlreadyReceivedCoordinates;
                 NSMutableArray *restDetails = [[NSMutableArray alloc]init];
                 [dbManager execute:[NSString stringWithFormat:@"SELECT * FROM RestaurantDetails"] resultsArray:restDetails];
                 
-                RestaurantViewController *restaurantViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"RestaurantViewController"];
-                restaurantViewController.restauranta = restDetails;
-                [self.navigationController pushViewController:restaurantViewController animated:YES];
+                
+                NSUserDefaults *defaults = [[NSUserDefaults alloc]init];
+                [defaults setObject:restDetails forKey:@"Restaurants"];
+                [defaults synchronize];
+
+                [self performSegueWithIdentifier:@"LoginToRestaurant" sender:self];
+                
+                
+                
+//                RestaurantViewController *restaurantViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"RestaurantViewController"];
+//                restaurantViewController.restauranta = restDetails;
+//                [self.navigationController pushViewController:restaurantViewController animated:YES];
             }else{
                 passwordField.text=@"";
                 if ((message == (id)[NSNull null])||(message.length==0)||(message==nil)) {
@@ -407,6 +431,8 @@ static BOOL haveAlreadyReceivedCoordinates;
         }
     }
 }
+
+
 
 #pragma - TextField
 -(void) textFieldDidBeginEditing:(UITextField *)textField {
